@@ -8,12 +8,12 @@ const int greenPin = 5;
 
 const int playedNoteDuration = 100; // how long each note is actually played for
 
-const int numIntroBeats = 16;
-const int introMelody[numIntroBeats] = {NOTE_C3, -1, -1, NOTE_C3, NOTE_C3, -1, -1, NOTE_C3, NOTE_C3, -1, -1, NOTE_C3, -1, NOTE_C3, -1, NOTE_G2};
+const int numIntroNotes = 16;
+const int introMelody[numIntroNotes] = {NOTE_C3, -1, -1, NOTE_C3, NOTE_C3, -1, -1, NOTE_C3, NOTE_C3, -1, -1, NOTE_C3, -1, NOTE_C3, -1, NOTE_G2};
 
 const int numPhrasesPerCycle = 4;
-const int numMelodyBeats = 14;
-const int melody[numPhrasesPerCycle][numMelodyBeats] = { // separated by phrases
+const int numMelodyNotes = 14;
+const int melody[numPhrasesPerCycle][numMelodyNotes] = { // separated by phrases
   {NOTE_C3, NOTE_C4, NOTE_D4, NOTE_C4, NOTE_D4, NOTE_C4, NOTE_D4, NOTE_C4, NOTE_D4, NOTE_C4, NOTE_D4, NOTE_E4, -1, NOTE_C4},
   {NOTE_C3, NOTE_GS3, NOTE_GS3, NOTE_GS3, NOTE_GS3, NOTE_GS3, NOTE_AS3, NOTE_GS3, NOTE_G3, -1, NOTE_A3, NOTE_B3, -1, -1},
   {NOTE_C3, NOTE_C4, NOTE_D4, NOTE_C4, NOTE_D4, NOTE_C4, NOTE_D4, NOTE_C4, NOTE_D4, NOTE_C4, NOTE_D4, NOTE_E4, -1, NOTE_C4},
@@ -54,7 +54,7 @@ void loop() {
   setupPhrase(phraseIndex);
 
   // play intro
-  while (noteIndex < numIntroBeats) {
+  while (noteIndex < numIntroNotes) {
     noteDuration = noteIndex % 2 == 0 ? noteDurationLong : noteDurationShort;
     if (introMelody[noteIndex] > 0)
       playNote(introMelody, noteIndex, noteDuration);
@@ -68,45 +68,43 @@ void loop() {
   
   // play melody
   while (phraseIndex < numTotalPhrases) {
-    currentMillis = millis();
-
-    if (currentMillis - previousNoteMillis >= noteDuration) { // marks each note
-      previousNoteMillis = currentMillis;
-      noteDuration = noteIndex % 2 == 0 ? noteDurationLong : noteDurationShort;
-
-      if (noteIndex <= fadeout && melody[melodyIndex][noteIndex] > 0)
-        playNote(melody[melodyIndex], noteIndex, noteDuration);
-      else
-        delay(noteDuration);
-
-      noteIndex++;
+    noteDuration = noteIndex % 2 == 0 ? noteDurationLong : noteDurationShort;
+    if (noteIndex <= fadeout && melody[melodyIndex][noteIndex] > 0)
+      playNote(melody[melodyIndex], noteIndex, noteDuration);
+    else
+      delay(noteDuration);
+    noteIndex++;
       
-      if (noteIndex == numMelodyBeats) { // marks end of each phrase
-        // wait for button press
-        unsigned long pressStart = millis();
-        bool buttonPressed = false;
-        while (millis() - pressStart < 2 * beatInterval) {
-          if (digitalRead(buttonPin) == HIGH) {
-            if (millis() - pressStart <= perfectTolerance)
-              blinkLED(greenPin);
-            else if (millis() - pressStart <= barelyTolerance)
-              blinkLED(yellowPin);
-            else
-              blinkLED(redPin);
-            buttonPressed = true;
-            break;
-          }
-        }
-        if (!buttonPressed)
-          blinkLED(redPin);
-        delay(2000);
-
-        phraseIndex++;
-        if (phraseIndex < numTotalPhrases) setupPhrase(phraseIndex);
-      }
+    if (noteIndex == numMelodyNotes) { // marks end of each phrase
+      handleEighthBeat();
     }
   }
   delay(5000);
+}
+
+void handleEighthBeat() {
+  // wait for button press
+    unsigned long beatStart = millis();
+    bool buttonPressed = false;
+    while (millis() - beatStart < 2 * beatInterval) {
+      if (digitalRead(buttonPin) == HIGH) {
+        int timePressed = millis();
+        if (timePressed - beatStart <= perfectTolerance)
+          blinkLED(greenPin);
+        else if (timePressed - beatStart <= barelyTolerance)
+          blinkLED(yellowPin);
+        else
+          blinkLED(redPin);
+        buttonPressed = true;
+        break;
+      }
+    }
+    if (!buttonPressed)
+      blinkLED(redPin);
+    delay(2000);
+
+    phraseIndex++;
+    if (phraseIndex < numTotalPhrases) setupPhrase(phraseIndex);
 }
 
 void setupPhrase(int phraseIndex) {
