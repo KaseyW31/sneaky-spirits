@@ -42,6 +42,7 @@ unsigned long previousNoteMillis = 0;
 unsigned long currentMillis = 0;
 
 void setup() {
+  Serial.begin(9600);
   pinMode(buzzerPin, OUTPUT);
   pinMode(buttonPin, INPUT);
   pinMode(greenPin, OUTPUT);
@@ -88,7 +89,7 @@ void handleEighthBeat() {
     bool buttonPressed = false;
     while (millis() - beatStart < 2 * beatInterval) {
       if (digitalRead(buttonPin) == HIGH) {
-        int timePressed = millis();
+        unsigned long timePressed = millis();
         if (timePressed - beatStart <= perfectTolerance)
           blinkLED(greenPin);
         else if (timePressed - beatStart <= barelyTolerance)
@@ -108,7 +109,7 @@ void handleEighthBeat() {
 }
 
 void setupPhrase(int phraseIndex) {
-  melodyIndex = phraseIndex % 4;
+  melodyIndex = phraseIndex % numPhrasesPerCycle;
   tempo = phraseTempos[phraseIndex];
   beatInterval = (60.0 / tempo) * 1000;
   noteDurationLong = beatInterval * 0.667;
